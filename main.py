@@ -4,94 +4,19 @@
 import os
 import sqlite3
 from sqlite3 import Error
+from connect import Connect
+import pandas as pd
+from tabulate import tabulate
 
 os.system("cls")
 
 # Conectar
 
-conne = sqlite3.connect('Almacen.db')
-cursorObj = conne.cursor()
-cursorObj.execute(
-    "CREATE TABLE IF NOT EXISTS Producto (id integer PRIMARY KEY AUTOINCREMENT,nombre text NOT NULL,descripcion text,precio real,cantidad integer,peso integer)")
-cursorObj.execute(
-    "CREATE TABLE IF NOT EXISTS Cliente (codigo integer PRIMARY KEY AUTOINCREMENT,	cedula text NOT NULL,	nombre text,	telefono text,	direccion text)")
-conne.commit()
-
-
-def sql_insert(query):
-    try:
-        conne.execute(query)
-        conne.commit()
-    except:
-        print(query)
-        print(Error)
-
-
-def sql_list(table):
-    try:
-        query = "select *from "+table
-        return conne.execute(query)
-    except:
-        print(query)
-        print(Error)
-
-
-def sql_search(table, text):
-    try:
-        query = "select *from "+table+" where nombre like '%"+text+"%'"
-        return conne.execute(query)
-    except:
-        print(query)
-        print(Error)
-
-
-def sql_update(query):
-    try:
-        conne.execute(query)
-        conne.commit()
-    except:
-        print(query)
-        print(Error)
-
-
-def sql_delete(table, name_id, codigo):
-    try:
-        sql = "DELETE FROM "+table+" WHERE "+name_id+"=?"
-        conne.execute(sql, (codigo,))
-        conne.commit()
-    except:
-        print(sql)
-        print(Error)
-
-# == fin connect
-
-# conexion = sqlite3.connect('Almacen.db')
-# print('base de datos creada con exito ..')
-
-
-# cursor = conexion.cursor()
-
-# cursor.execute('CREATE TABLE productos  (codigo VARCHAR(50), descripcion VARCHAR(50), precio INTIGER, cantidad INTIGER, color VARCHAR(50),tamaño VARCHAR( 50))')
-# cursor.execute(
-#     'CREATE TABLE clientes  (codigo VARCHAR(50), ci INTIGER, nombre VARCHAR(50),telefono VARCHAR(50),direccion VARCHAR( 50))')
-
-class Producto:
-    def __init__(self, id, nombre, descripcion, precio, cantidad=0):
-        self.id = id
-        self.nombre = nombre
-        self.descripcion = descripcion
-        self.precio = precio
-        self.cantidad = cantidad
-        return
-
-    def info(self):
-        print(self.id+" - "+self.nombre)
-
-
 class Almacen:
     # atributos
-    def __init__(self):
-        self.producto = list()
+    def __init__(self, conne):
+        self.conne = conne
+        self.productos = list()
 
     # metodos
     def menu(self):
@@ -101,13 +26,13 @@ class Almacen:
             print("1. Ingresar nuevo producto")
             print("2. Ingresar nuevo cliente")
             print("3. Listar productos")
-            print('4.Listar clientes')
-            print('5.Buscar productos')
-            print('6.Buscar clientes')
-            print('7.Modificar productos')
-            print('8.Modificar clientes')
-            print('9.Eliminar productos')
-            print('10.Eliminar clientes')
+            print('4. Listar clientes')
+            print('5. Buscar productos')
+            print('6. Buscar clientes')
+            print('7. Modificar productos')
+            print('8. Modificar clientes')
+            print('9. Eliminar productos')
+            print('10. Eliminar clientes')
             print("11. Salir")
 
             opcion = int(input("Seleccione una opción: "))
@@ -154,10 +79,9 @@ class Almacen:
 
         sql = "INSERT INTO Producto (nombre,descripcion,precio,cantidad ,peso) VALUES('" + \
             name+"','"+descrip+"',"+price+","+count+","+weigth+")"
-        print(sql)
-        sql_insert(sql)
+        self.conne.sql_insert(sql)
 
-        # con.sql_insert(con, sql)
+        # con.self.conne.sql_insert(con, sql)
         exit = input("creando ")
 
     def ingresar_cliente(self):
@@ -168,24 +92,30 @@ class Almacen:
 
         sql = "INSERT INTO cliente (cedula,nombre,telefono,direccion) VALUES('" + \
             cedula+"','"+nombre+"','"+telefono+"','"+direccion+"')"
-        print(sql)
-        sql_insert(sql)
+        self.conne.sql_insert(sql)
+        salida = input("continue ...")
 
     def listar_producto(self):
-        list_products = sql_list("Producto")
-        for i in list_products:
-            print(i)
+        list_products = self.conne.sql_list("Producto")
+
+        df = pd.DataFrame(list_products, columns=[
+                          'ID', 'Name', 'Descrip', 'Precio', 'Cant', 'Peso'])
+        print("=================== Productos ========================")
+        print(df)
+        print("======================================================")
         salida = input("continue ...")
 
     def listar_clientes(self):
-        list_clients = sql_list("Cliente")
-        for i in list_clients:
-            print(i)
+        list_clients = self.conne.sql_list("Cliente")
+        print("\n=================== Clientes =========================")
+        print(tabulate(list_clients, headers=[
+              'ID', 'Name', 'Descrip', 'Precio', 'Cant', 'Peso']))
+        print("======================================================")
         salida = input("continue ...")
 
     def buscar_producto(self):
         text = input("Buscar : ")
-        products = sql_search("Producto", text)
+        products = self.conne.sql_search("Producto", text)
 
         for i in products:
             print(i)
@@ -193,7 +123,7 @@ class Almacen:
 
     def buscar_clientes(self):
         text = input("Buscar : ")
-        clients = sql_search("cliente", text)
+        clients = self.conne.sql_search("cliente", text)
 
         for i in clients:
             print(i)
@@ -208,7 +138,7 @@ class Almacen:
 
         sql = "UPDATE Producto SET nombre = '"+name + \
             "', descripcion = '"+descrip+"' WHERE id= '"+option+"'"
-        sql_update(sql)
+        self.conne.sql_update(sql)
         salida = input("Modificado ...")
 
     def modificar_cliente(self):
@@ -220,24 +150,25 @@ class Almacen:
 
         sql = "UPDATE Cliente SET nombre = '"+name + \
             "', telefono = '"+telefono+"' WHERE codigo= '"+option+"'"
-        sql_update(sql)
+        self.conne.sql_update(sql)
         salida = input("Modificado ...")
 
     def eliminar_producto(self):
         self.listar_producto()
         option = input("Ingrese codigo a eliminar: ")
 
-        sql_delete("Producto", "id", option)
+        self.conne.sql_delete("Producto", "id", option)
         salida = input("Eliminado ...")
 
     def eliminar_cliente(self):
         self.listar_clientes()
         option = input("Ingrese codigo a eliminar: ")
 
-        sql_delete("Cliente", "codigo", option)
+        self.conne.sql_delete("Cliente", "codigo", option)
         salida = input("Eliminado ...")
 
 
-almacen = Almacen()
+connection = Connect('Almacen.db')
+almacen = Almacen(connection)
 almacen.menu()
-conne.close()
+connection.conne.close()

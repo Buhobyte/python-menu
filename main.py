@@ -44,6 +44,25 @@ def sql_search(table, text):
         print(query)
         print(Error)
 
+
+def sql_update(query):
+    try:
+        conne.execute(query)
+        conne.commit()
+    except:
+        print(query)
+        print(Error)
+
+
+def sql_delete(table, name_id, codigo):
+    try:
+        sql = "DELETE FROM "+table+" WHERE "+name_id+"=?"
+        conne.execute(sql, (codigo,))
+        conne.commit()
+    except:
+        print(sql)
+        print(Error)
+
 # == fin connect
 
 # conexion = sqlite3.connect('Almacen.db')
@@ -109,16 +128,16 @@ class Almacen:
                 self.buscar_producto()
 
             elif opcion == 6:
-                self.buscar_cliente()
+                self.buscar_clientes()
 
             elif opcion == 7:
-                self.modificar()
+                self.modificar_producto()
 
             elif opcion == 8:
                 self.modificar_cliente()
 
             elif opcion == 9:
-                self.eliminar()
+                self.eliminar_producto()
 
             elif opcion == 10:
                 self.eliminar_cliente()
@@ -156,23 +175,68 @@ class Almacen:
         list_products = sql_list("Producto")
         for i in list_products:
             print(i)
-        salida = input("Saliendo ...")
+        salida = input("continue ...")
 
     def listar_clientes(self):
         list_clients = sql_list("Cliente")
         for i in list_clients:
             print(i)
-        salida = input("Saliendo ...")
+        salida = input("continue ...")
 
-#     def listar_cliente(self):
-#         print("listado de cliente")
-#         for x in range(5):
-#             if self.cliente:
-#                 print(self.nombre[x], "-", self.cliente[x])
-#         print("___::   o    ::___")
+    def buscar_producto(self):
+        text = input("Buscar : ")
+        products = sql_search("Producto", text)
 
+        for i in products:
+            print(i)
+        salida = input("continue ...")
 
-# Realizar la conexción
+    def buscar_clientes(self):
+        text = input("Buscar : ")
+        clients = sql_search("cliente", text)
+
+        for i in clients:
+            print(i)
+        salida = input("continue ...")
+
+    def modificar_producto(self):
+        self.listar_producto()
+        option = input("Ingrese id: ")
+
+        name = input("Ingrese nombre del producto: ")
+        descrip = input("Ingrese descripcion del producto: ")
+
+        sql = "UPDATE Producto SET nombre = '"+name + \
+            "', descripcion = '"+descrip+"' WHERE id= '"+option+"'"
+        sql_update(sql)
+        salida = input("Modificado ...")
+
+    def modificar_cliente(self):
+        self.listar_clientes()
+        option = input("Ingrese id: ")
+
+        name = input("Ingrese nombre del cliente: ")
+        telefono = input("Ingrese telefono del cliente: ")
+
+        sql = "UPDATE Cliente SET nombre = '"+name + \
+            "', telefono = '"+telefono+"' WHERE codigo= '"+option+"'"
+        sql_update(sql)
+        salida = input("Modificado ...")
+
+    def eliminar_producto(self):
+        self.listar_producto()
+        option = input("Ingrese codigo a eliminar: ")
+
+        sql_delete("Producto", "id", option)
+        salida = input("Eliminado ...")
+
+    def eliminar_cliente(self):
+        self.listar_clientes()
+        option = input("Ingrese codigo a eliminar: ")
+
+        sql_delete("Cliente", "codigo", option)
+        salida = input("Eliminado ...")
+
 
 almacen = Almacen()
 almacen.menu()
